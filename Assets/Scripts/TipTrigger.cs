@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 [System.Serializable]
@@ -14,10 +15,11 @@ public class TipLine
 
 public class TipTrigger : MonoBehaviour
 {
+    public Transform player0;
     public Transform player1;
-    public Transform player2;
     public CameraControl cameraControl;
 
+    public Sprite newSprite;
     public GameObject endCg;
     
     public Image speakerAImage; 
@@ -37,7 +39,7 @@ public class TipTrigger : MonoBehaviour
     private AudioSource _audioSource; 
 
     private bool _isDialogueActive; 
-    private List<DialogueLine> _currentDialogues; // 当前物品的对话序列
+    private List<TipLine> _currentDialogues; // 当前物品的对话序列
     private Action _onDialogueEnded;
 
     void Start()
@@ -108,25 +110,25 @@ public class TipTrigger : MonoBehaviour
     private void SwapPlayersPosition()
     {
         // 检查玩家引用是否有效
-        if (player1 == null || player2 == null)
+        if (player0 == null || player1 == null)
         {
-            Debug.LogError("请在TipTrigger中赋值player1和player2的引用！");
+            Debug.LogError("请在TipTrigger中赋值player0和player1的引用！");
             return;
         }
-
-        (player1.position, player2.position) = (player2.position, player1.position);
-        (player1.rotation, player2.rotation) = (player2.rotation, player1.rotation);
+    
+        (player0.position, player1.position) = (player1.position, player0.position);
+        (player0.rotation, player1.rotation) = (player1.rotation, player0.rotation);
         
-        if (cameraControl.currentTarget == player1)
+        if (cameraControl._target == player0)
         {
-            cameraControl.currentTarget = player2;
+            cameraControl._target = player1;
         }
         else
         {
-            cameraControl.currentTarget = player1;
+            cameraControl._target = player0;
         }
-        // 更新相机与新目标的偏移量（确保视角平滑）
-        cameraControl.UpdateOffset();
+        if (PlayerControl.instance != null)
+            PlayerControl.instance.SwitchControl();
     }
     
     private void PlayClickSound()
@@ -145,7 +147,7 @@ public class TipTrigger : MonoBehaviour
         jointSpeechText.gameObject.SetActive(false);
     }
 
-    public void StartDialogue(List<DialogueLine> dialogues, InteractableItem interactable, Action onEnded)
+    public void StartDialogue(List<TipLine> dialogues, InteractableItem interactable, Action onEnded)
     {
         _currentInteractable = interactable;
         _currentDialogues = dialogues;
@@ -165,7 +167,7 @@ public class TipTrigger : MonoBehaviour
             return;
         }
 
-        DialogueLine currentLine = _currentDialogues[_currentLineIndex];
+        TipLine currentLine = _currentDialogues[_currentLineIndex];
         ResetTextVisibility();
         
         if (currentLine.isSpeakerA && currentLine.isSpeakerB)
@@ -207,7 +209,7 @@ public class TipTrigger : MonoBehaviour
         textComponent.text = content;
     }
 
-    private void HandleJointSpeech(DialogueLine line)
+    private void HandleJointSpeech(TipLine line)
     {
         speakerAImage.color = Color.white;
         speakerBImage.color = Color.white;
@@ -217,7 +219,7 @@ public class TipTrigger : MonoBehaviour
         jointSpeechText.text = line.content;
     }
     
-    private void HandleNarration(DialogueLine line)
+    private void HandleNarration(TipLine line)
     {
         speakerAImage.color = _fullyTransparentColor;
         speakerBImage.color = _fullyTransparentColor;

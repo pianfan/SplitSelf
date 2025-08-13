@@ -6,11 +6,13 @@ public class InteractableItem : MonoBehaviour
 {
     [Header("互动设置")]
     public TipTrigger dialoguePanel;    // 唯一的对话面板
-    public List<DialogueLine> itemDialogues;// 该物品的专属对话
+    public List<TipLine> itemDialogues;// 该物品的专属对话
     public bool isDestructible;
     public bool isMirror;
     public bool isDoor;
+	public bool isDiary;
     public bool isEnd;
+    public Sprite newSprite;
     public string targetSceneName;
     public SceneTransitionManager transitionManager;
 
@@ -19,6 +21,9 @@ public class InteractableItem : MonoBehaviour
     public Text globalNameText; // 场景中唯一的名称Text
     public string itemName;     // 物品名称
 
+    public SpriteRenderer itemSprite;
+    public GameObject targetItem;
+    
     public bool IsPlayerInRange => _isPlayerInRange;
     public static InteractableItem CurrentInteractable { get; private set; }
     private bool _isPlayerInRange;
@@ -55,7 +60,12 @@ public class InteractableItem : MonoBehaviour
                 }
                 else
                 {
-                    // 非门物品，正常打开对话
+                    if (itemDialogues == null || itemDialogues.Count == 0)
+                    {
+                        Debug.LogWarning($"{gameObject.name} 没有对话数据！");
+                        _isInteracting = false;
+                        return;
+                    }
                     ToggleDialogue();
                 }
                 CurrentInteractable = null;
@@ -90,6 +100,21 @@ public class InteractableItem : MonoBehaviour
     private void OnDialogueEnded()
     {
         _isInteracting = false;
+
+        if (isDiary && newSprite != null)
+        {
+            itemSprite.sprite = newSprite;
+
+            if (targetItem != null)
+            {
+                CapsuleCollider2D capsuleCollider = targetItem.GetComponent<CapsuleCollider2D>();
+                if (capsuleCollider != null)
+                {
+                    capsuleCollider.enabled = true;
+                }
+            }
+        }
+            
     }
     
     public void ShowGlobalTexts()
